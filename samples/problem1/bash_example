@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+USAGE="./bash_example [--help|-h]\n"
+USAGE+="./bash_example --create-file=<filename> [--no-prompt] [--verbose]"
+
+STATE_LIST=(
+"Alabama" "Alaska" "Arizona" "Arkansas" "California"
+"Colorado" "Connecticut" "Delaware" "Florida" "Georgia"
+"Hawaii" "Idaho" "Illinois" "Indiana" "Iowa"
+"Kansas" "Kentucky" "Louisiana" "Maine" "Maryland"
+"Massachusetts" "Michigan" "Minnesota" "Mississippi" "Missouri"
+"Montana" "Nebraska" "Nevada" "New Hampshire" "New Jersey"
+"New Mexico" "New York" "North Carolina" "North Dakota" "Ohio"
+"Oklahoma" "Oregon" "Pennsylvania" "Rhode Island" "South Carolina"
+"South Dakota" "Tennessee" "Texas" "Utah" "Vermont"
+"Virginia" "Washington" "West Virginia" "Wisconsin" "Wyoming"
+)
+
+# Write 50 states to the file.
+# $1: FILENAME
+function output {
+    FILENAME=$1
+    > $FILENAME
+    for i in "${STATE_LIST[@]}"; do
+       echo "$i" >> $FILENAME
+    done
+}
+
+# Keep prompting and return only when n or y is input
+function prompt_overwrite {
+    INPUT=""
+    while [ "$INPUT" != "y" ] && [ "$INPUT" != "n" ]; do
+        echo "File exists. Overwrite (y/n) ?" >&2
+        read INPUT
+    done
+    echo $INPUT
+}
+
+while [[ $# -gt 0 ]]; do
+    KEY="$1"
+    case $KEY in
+        -h|--help)
+        echo -e $USAGE
+        exit 0
+        ;;
+        --create-file=*)
+        FILENAME="${KEY#*=}"
+        ;;
+        --no-prompt)
+        NO_PROMPT=true
+        ;;
+        --verbose)
+        VERBOSE=true
+        ;;
+        *)
+        echo -e $USAGE
+        exit 1
+        ;;
+    esac
+    shift
+done
+
+# Filename must not be empty
+if [ -z "$FILENAME" ]; then
+    echo -e $USAGE
+    exit 1
+fi
+
+# Check if file exists
+if [ -f "$FILENAME" ]; then
+    [ "$VERBOSE" = true ] && echo "File already exists"
+    if [ ! "$NO_PROMPT" = true ] && [ $(prompt_overwrite) = "n" ]; then
+        exit 0
+    fi
+    rm "$FILENAME"
+    [ "$VERBOSE" = true ] && echo "File removed"
+fi
+
+# Real work
+[ "$VERBOSE" = true ] && echo "File created"
+output $FILENAME
